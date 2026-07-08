@@ -4,15 +4,18 @@
 
 ## 快速开始
 
-**无需安装。** 克隆 + 启动：
+**两步**：
 
 ```bash
 git clone https://github.com/peishaosong/cnc-freecad.git
 cd cnc-freecad
-./scripts/start_freecad.sh
+./scripts/setup.sh           # 一次性安装
+open /Applications/FreeCAD.app
 ```
 
-FreeCAD 启动后，下拉菜单选工作台 **"CNC AutoCAM"** 即可。
+下拉工作台菜单选 **"CNC AutoCAM"**。
+
+之后任何方式启动 FreeCAD（Dock / Spotlight / 命令行 / 双击 .app），CNC AutoCAM 都自动出现。
 
 ## 工具栏命令
 
@@ -25,23 +28,36 @@ FreeCAD 启动后，下拉菜单选工作台 **"CNC AutoCAM"** 即可。
 | Ctrl+G | 生成刀路（3D 视图显示） |
 | Ctrl+E | 输出 G-code（保存 .nc） |
 
+## 卸载
+
+```bash
+./scripts/setup.sh remove
+```
+
 ## 开发模式
 
-代码改动保存后，在 FreeCAD 里执行 `Tools > Reload Scripts` 或重启即可生效，**无需重启整个应用**。
+代码改了保存后，在 FreeCAD 里：
+- `Tools > Reload Scripts`，或
+- 重启 FreeCAD
+
+无需重新 setup。
 
 ## 脚本入口
 
 ```bash
-./scripts/run.sh verify        # M0 环境验证
-./scripts/run.sh hello         # Hello CNC demo
-./scripts/run.sh test          # M0 测试
-./scripts/run.sh m1            # M1 core 测试
-./scripts/run.sh ui            # M1 UI 测试
-./scripts/run.sh all           # M0 + M1 core
-./scripts/run.sh all-ui        # M0 + M1 core + UI
-./scripts/run.sh cli info      # CLI: 版本信息
-./scripts/run.sh cli run-pocket --width 80 --depth 80 --pocket-depth 15 -o pocket.nc
-./scripts/run.sh start         # 启动 FreeCAD GUI
+./scripts/setup.sh            # 一次性安装（创建符号链接到 ~/.FreeCAD/Mod/）
+./scripts/setup.sh status     # 查看安装状态
+./scripts/setup.sh remove     # 卸载
+
+./scripts/run.sh verify       # M0 环境验证
+./scripts/run.sh hello        # Hello CNC demo
+./scripts/run.sh test         # M0 测试
+./scripts/run.sh m1           # M1 core 测试
+./scripts/run.sh ui           # M1 UI 测试
+./scripts/run.sh all          # M0 + M1 core
+./scripts/run.sh all-ui       # M0 + M1 core + UI
+./scripts/run.sh cli info     # CLI: 版本信息
+./scripts/run.sh cli run-pocket --width 80 --depth 80 -o pocket.nc
 ```
 
 ## 项目结构
@@ -49,44 +65,46 @@ FreeCAD 启动后，下拉菜单选工作台 **"CNC AutoCAM"** 即可。
 ```
 cnc-freecad/
 ├── src/
-│   └── cnc_freecad/
-│       ├── core/              核心算法（刀路生成/后处理）
-│       ├── data/              数据模型（Pydantic v2）
-│       ├── freecad/           FreeCAD UI 集成
-│       │   ├── workbench.py
-│       │   ├── commands/      6 个 UI 命令
-│       │   └── visualize.py   刀路 3D 显示
-│       └── __main__.py        CLI 入口
-├── tests/                     测试套
-├── examples/                  示例 G-code
-├── scripts/                   启动 + 工具脚本
-└── docs/                      技术文档（外部：~/Desktop/松少/docs/cnc-freecad/）
+│   ├── cnc_freecad/          # Python package
+│   │   ├── core/             核心算法（刀路生成/后处理）
+│   │   ├── data/             数据模型（Pydantic v2）
+│   │   ├── freecad/          FreeCAD UI 集成
+│   │   │   ├── workbench.py
+│   │   │   ├── commands/     6 个 UI 命令
+│   │   │   └── visualize.py  刀路 3D 显示
+│   │   └── __main__.py       CLI 入口
+│   └── Mod/
+│       └── CncmAutoCAM/
+│           └── InitGui.py    # FreeCAD 自动加载入口
+├── tests/                    测试套
+├── examples/                 示例 G-code
+├── scripts/                  setup.sh / run.sh / 测试脚本
+└── docs/                     技术文档（外部：~/Desktop/松少/docs/cnc-freecad/）
 ```
 
 ## 环境要求
 
-| 依赖 | 版本 | 说明 |
-|------|------|------|
-| FreeCAD | ≥ 1.0 | 平台/几何内核 |
-| Python | ≥ 3.11 | FreeCAD 自带 |
-| Pydantic | ≥ 2.0 | 数据模型（已在 FreeCAD Python 中） |
-| NumPy | ≥ 1.26 | 路径计算 |
+| 依赖 | 版本 |
+|------|------|
+| FreeCAD | ≥ 1.0 |
+| Python | ≥ 3.11 (FreeCAD 自带) |
+| Pydantic | ≥ 2.0 (FreeCAD 自带) |
+| NumPy | ≥ 1.26 (FreeCAD 自带) |
 
-## 命令行工具
+## 工作原理
 
-```bash
-# 直接生成简单型腔 G-code（无需 FreeCAD GUI）
-PYTHONPATH=src \
-  /Applications/FreeCAD.app/Contents/Resources/bin/python \
-  -m cnc_freecad run-pocket \
-    --width 80 --depth 80 --pocket-depth 15 \
-    --tool-diameter 12 \
-    --output pocket.nc
+`./scripts/setup.sh` 在用户级 FreeCAD Mod 目录创建符号链接：
+
 ```
+~/Library/Application Support/FreeCAD/v1-1/Mod/CncmAutoCAM
+    → /Users/<you>/path/to/cnc-freecad/src/Mod/CncmAutoCAM
+```
+
+FreeCAD 启动时扫描这个目录，执行 `InitGui.py`，加载项目代码并注册 workbench。修改项目代码后重启 FreeCAD 生效，无需重新 setup。
 
 ## 完整文档
 
-技术开发文档位于 `~/Desktop/松少/docs/cnc-freecad/`，共 8 份：
+`~/Desktop/松少/docs/cnc-freecad/` 共 8 份：
 - `00-overview.md` — 项目背景/目标
 - `01-architecture.md` — 系统架构
 - `02-tech-stack.md` — 技术选型
@@ -100,10 +118,9 @@ PYTHONPATH=src \
 
 | 阶段 | 状态 |
 |------|------|
-| M0 环境验证 | ✅ 完成 |
-| M1 最小闭环 | ✅ 完成（含 FreeCAD UI） |
+| M0 环境验证 | ✅ |
+| M1 最小闭环（含 FreeCAD UI） | ✅ |
 | M2 特征识别 | 📋 待开始 |
-| M3 工艺匹配 | 📋 待开始 |
 
 ## 版本
 

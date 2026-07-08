@@ -94,11 +94,16 @@ sys.exit(rc1 or rc2 or rc3)
         FREECAD_PY="/Applications/FreeCAD.app/Contents/Resources/bin/python"
         PYTHONPATH="$PROJECT_ROOT/src:$PYTHONPATH" "$FREECAD_PY" -m cnc_freecad "$@"
         ;;
+    start)
+        exec bash "$PROJECT_ROOT/scripts/start_freecad.sh" "$@"
+        ;;
     install)
-        bash "$PROJECT_ROOT/scripts/install_to_freecad.sh"
+        echo "No install needed. Just run: ./scripts/start_freecad.sh"
+        exit 1
         ;;
     uninstall)
-        bash "$PROJECT_ROOT/scripts/uninstall_from_freecad.sh"
+        echo "No install/uninstall - nothing to remove."
+        exit 0
         ;;
     *)
         # Treat as custom script path
@@ -106,7 +111,7 @@ sys.exit(rc1 or rc2 or rc3)
             $FREECAD_PYTHON "$CMD"
         else
             echo "Unknown command or missing script: $CMD"
-            echo "Usage: $0 [verify|hello|test|m1|ui|all|all-ui|cli -- <args>|<script.py>]"
+            echo "Usage: $0 [verify|hello|test|m1|ui|all|all-ui|start|cli -- <args>|<script.py>]"
             exit 1
         fi
         ;;

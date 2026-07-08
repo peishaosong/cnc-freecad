@@ -40,3 +40,23 @@ jobs:
           from tests.test_env import run_all
           sys.exit(run_all())
           "
+
+      - name: Run M1 toolpath test
+        run: |
+          /Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd -c "
+          import sys
+          sys.path.insert(0, '.')
+          from tests.test_m1_toolpath import run_all
+          sys.exit(run_all())
+          "
+
+      - name: Verify CLI works
+        run: |
+          PYTHONPATH=$PWD/src \
+            /Applications/FreeCAD.app/Contents/Resources/bin/python \
+            -m cnc_freecad info
+          PYTHONPATH=$PWD/src \
+            /Applications/FreeCAD.app/Contents/Resources/bin/python \
+            -m cnc_freecad run-pocket \
+              --width 60 --depth 40 --pocket-depth 8 \
+              --output /tmp/cli_test.nc

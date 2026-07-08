@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python (FreeCAD bundled)
+        run: |
+          # GitHub Actions macos runners don't have FreeCAD pre-installed
+          # Install via Homebrew
+          brew install --cask freecad
+
+      - name: Run environment verification
+        run: ./scripts/verify_env.sh
+
+      - name: Run unit tests (M0)
+        run: |
+          /Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd -c "
+          import sys
+          sys.path.insert(0, '.')
+          from tests.test_env import run_all
+          sys.exit(run_all())
+          "

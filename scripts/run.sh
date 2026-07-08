@@ -54,6 +54,16 @@ from tests.test_m1_toolpath import run_all
 sys.exit(run_all())
 "
         ;;
+    ui)
+        # UI tests need QT offscreen (3D view won't render, but Qt does)
+        export QT_QPA_PLATFORM=offscreen
+        $FREECAD_PYTHON -c "
+import sys
+sys.path.insert(0, '.')
+from tests.test_m1_ui import run_all
+sys.exit(run_all())
+"
+        ;;
     all)
         $FREECAD_PYTHON -c "
 import sys
@@ -65,10 +75,30 @@ rc2 = run_all()
 sys.exit(rc1 or rc2)
 "
         ;;
+    all-ui)
+        export QT_QPA_PLATFORM=offscreen
+        $FREECAD_PYTHON -c "
+import sys
+sys.path.insert(0, '.')
+from tests.test_env import run_all
+rc1 = run_all()
+from tests.test_m1_toolpath import run_all
+rc2 = run_all()
+from tests.test_m1_ui import run_all
+rc3 = run_all()
+sys.exit(rc1 or rc2 or rc3)
+" || true
+        ;;
     cli)
         shift
         FREECAD_PY="/Applications/FreeCAD.app/Contents/Resources/bin/python"
         PYTHONPATH="$PROJECT_ROOT/src:$PYTHONPATH" "$FREECAD_PY" -m cnc_freecad "$@"
+        ;;
+    install)
+        bash "$PROJECT_ROOT/scripts/install_to_freecad.sh"
+        ;;
+    uninstall)
+        bash "$PROJECT_ROOT/scripts/uninstall_from_freecad.sh"
         ;;
     *)
         # Treat as custom script path
@@ -76,7 +106,7 @@ sys.exit(rc1 or rc2)
             $FREECAD_PYTHON "$CMD"
         else
             echo "Unknown command or missing script: $CMD"
-            echo "Usage: $0 [verify|hello|test|m1|all|cli -- <args>|<script.py>]"
+            echo "Usage: $0 [verify|hello|test|m1|ui|all|all-ui|cli -- <args>|<script.py>]"
             exit 1
         fi
         ;;

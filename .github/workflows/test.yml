@@ -5,20 +5,31 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   test-macos:
     runs-on: macos-latest
+    timeout-minutes: 15
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Python (FreeCAD bundled)
         run: |
-          # GitHub Actions macos runners don't have FreeCAD pre-installed
-          # Install via Homebrew
+          # macos runners don't have FreeCAD pre-installed
           brew install --cask freecad
 
-      - name: Run environment verification
+          FREECAD_PYTHON="/Applications/FreeCAD.app/Contents/Resources/bin/python"
+          echo "FREECAD_PYTHON=$FREECAD_PYTHON" >> $GITHUB_ENV
+
+      - name: Install project dependencies
+        run: |
+          # Pydantic v2 must be installed into FreeCAD's bundled Python
+          ${{ env.FREECAD_PYTHON }} -m pip install pydantic
+
+      - name: Run environment verification (verify_env.sh)
         run: ./scripts/verify_env.sh
 
       - name: Run unit tests (M0)
